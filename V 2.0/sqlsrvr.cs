@@ -1,16 +1,13 @@
 using System;
-using System.Data;
 using System.Collections.Generic;
-using System.Collections.Specialized;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using System.Configuration;
 
-
+//using System.Data.SqlClient;
 using System.Data.Odbc;
 
-namespace iPayLNM_MySQL
+namespace iPayLNM
 {
     class Program
     {
@@ -22,17 +19,23 @@ namespace iPayLNM_MySQL
             string UID = Keyval()["UID"];
             string PWD = Keyval()["PWD"];
             
-			string constr = "server=localhost;user="+UID+";database="+dbname+";port=3306;password="+PWD+";";
-                //MySqlConnection conn = new MySqlConnection(constr);
-                var conn = new OdbcConnection("DSN=modemmysql");
+            //SqlConnection con = new SqlConnection("Data Source=RAYZY\\MPESA;Initial Catalog=lnm;User ID=sa;Password=kennedy1;" + "MultipleActiveResultSets=true");
+            var con = new OdbcConnection("Driver={SQL server};Server="+servr+";Database="+dbname+"; Uid="+UID+"; Pwd="+PWD+";");
 
-            Console.WriteLine("Connecting to Mysql");
-            conn.Open();
+
+            OdbcDataReader dr;
+            OdbcCommand cmd;
+
+            con.Open();
+
             //A select statement to get all rows that do not have code filled in as per said. Also These should contain the unused/ unchecked codes.
-            string strSQL = "SELECT * FROM "+dbname+"."+tblnm+" WHERE `sms_text` LIKE '%Confirmed.%' AND `sender_number` IS NOT NULL AND (`code` = '' OR `code` IS NULL)";
-			OdbcCommand cmd = new OdbcCommand(strSQL, conn);
-			OdbcDataReader dr =  cmd.ExecuteReader();
 
+	    string strSQL = "USE "+dbname;
+            cmd = new OdbcCommand(strSQL, con);
+
+            strSQL = "SELECT * from "+dbname+"."+tblnm+" WHERE [code] IS NULL AND [SMS_TEXT] LIKE '%Confirmed.%' AND SENDER_NUMBER IS NOT NULL";
+            cmd = new OdbcCommand(strSQL, con);
+            dr = cmd.ExecuteReader();
 
             while (dr.Read())
             {
@@ -60,7 +63,7 @@ namespace iPayLNM_MySQL
                 //Ignore. These are the other text fields to be used as tests
 
                 //Here I'll be getting the row ID and the update will occur per Id That fulfills the said condition
-                string ID1 = dr["id"].ToString();
+                string ID1 = dr["ID"].ToString();
                 //Response.Write(ID1);
 
                 //****************************************
@@ -79,25 +82,22 @@ namespace iPayLNM_MySQL
                 arrText[9] = strfn;
                 arrText[10] = strln;
 
+                //****************************************
 
-                /*//****************************************
-                        Response.Write(brk);
-                        Response.Write(str);
-                        Response.Write(brk);
-                        Response.Write(strln);
-                    //****************************************
-                */
+                //sqlsrv update query to fulfill the condition. Update code and register code as used
+                strSQL = "Update "+dbname+"."+tblnm+" SET [code] = '" + arrText[0] + "', [amount] = '" + arrText[5] + "', [firstname] = '" + arrText[9] + "', [lastname] = '" + arrText[10] + "', [msisdn] = '" + arrText[8] + "' WHERE [ID] = " + ID1;
 
-                strSQL = "Update "+dbname+"."+tblnm+" SET `code` = '" + arrText[0] + "', `amount` = '" + arrText[5] + "', `firstname` = '" + arrText[9] + "', `lastname` = '" + arrText[10] + "', `msisdn` = '" + arrText[8] + "' WHERE `id` = " + ID1;
-                OdbcCommand update = new OdbcCommand(strSQL, conn);
+                var con2 = new OdbcConnection("Driver={SQL server};Server="+servr+";Database="+dbname+"; Uid="+UID+"; Pwd="+PWD+";");
+                con2.Open();
+                OdbcCommand update = new OdbcCommand(strSQL, con2);
                 //Response.Write(brk);
-                //Response.Write(strSQL);
-
+                // Response.Write(strSQL);
                 update.ExecuteNonQuery();
+                con2.Close();
             }   //end of the while loop
-        }
-        
-            //use dynamic when defining a method that returns a var
+            con.Close();
+        }   //end of function
+        //use dynamic when defining a method that returns a var
         static dynamic Keyval()
         {
             var dbname = ConfigurationManager.AppSettings;
@@ -106,6 +106,5 @@ namespace iPayLNM_MySQL
             return dbname;
             
         }
-    }
-}
-
+    }      //end of class
+}   // end of namespace
