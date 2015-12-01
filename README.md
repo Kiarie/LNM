@@ -3,7 +3,6 @@
 This is the SQl Server LNM exe to use it you must have a config file with the same name in the very same directory with relevant details of the server to connect to Database.
 
 
-
     1. the first field e.g <add key="Dbname" value="sms_in"/>
         * the key is the DB name you are trying to connect to 
         * the value is the name of the db table  to connect e.g. sms_in 
@@ -27,3 +26,6 @@ this is a sample of the config file.
 the name of the config **MUST EXACTLY** be like the name of the exe i.e sqlsrvr.exe.config 
 
 You can use the config provided and edit it.
+
+:smile::smile:
+GOOD LUCK
